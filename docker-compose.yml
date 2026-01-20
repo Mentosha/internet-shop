@@ -4,8 +4,7 @@ networks:
 services:
 
   postgres:
-    image: postgres:15-alpine
-    container_name: internet-shop-postgres
+    image: postgres:15
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -21,30 +20,44 @@ services:
       interval: 10s
       retries: 5
 
+  redis:
+    image: redis:7
+    restart: always
+    networks:
+      - analytics_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
   redash:
     image: redash/redash:latest
-    container_name: internet-shop-redash
     environment:
       REDASH_DATABASE_URL: ${REDASH_DATABASE_URL}
       REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_REDIS_URL: redis://redis:6379/0
     ports:
       - "5000:5000"
     networks:
       - analytics_net
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     restart: always
+    command: server
 
   redash-worker:
     image: redash/redash:latest
-    container_name: internet-shop-redash-worker
     environment:
       REDASH_DATABASE_URL: ${REDASH_DATABASE_URL}
       REDASH_SECRET_KEY: ${REDASH_SECRET_KEY}
+      REDASH_REDIS_URL: redis://redis:6379/0
     networks:
       - analytics_net
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     restart: always
@@ -53,21 +66,17 @@ services:
   generator:
     build:
       context: ./generate
-    container_name: internet-shop-generator
     networks:
       - analytics_net
     depends_on:
       - postgres
     restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.25"
+    env_file:
+    - .env
+
 
   jupyter:
     image: jupyter/scipy-notebook:latest
-    container_name: internet-shop-jupyter
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN}
       JUPYTER_ENABLE_LAB: "yes"
@@ -82,6 +91,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
       interval: 10s
       retries: 5
+    env_file:
+    - .env
 
 volumes:
   pgdata:
