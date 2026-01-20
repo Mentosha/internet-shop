@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# Docker
+*.log
+*.pid
+*.db
+
+# Jupyter
+notebooks/.ipynb_checkpoints
