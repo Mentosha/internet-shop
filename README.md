@@ -66,7 +66,7 @@ docker-compose up -d
 http://localhost:5000
 ```
 # Первоначальная настройка
-## При первом входе в Redash:
+## При первом входе в Redash (http://localhost:5000):
 
 - Зарегистрируйте первого пользователя (он станет администратором)
 
@@ -152,7 +152,7 @@ ORDER BY revenue DESC;
 
 - Линейный график динамики заказов во времени (по минутам)
 
-## Скриншоты
+# Скриншоты
 
 ### Инициализация базы Redash
 ![](screenshots/redash.jpg)
@@ -170,6 +170,7 @@ ORDER BY revenue DESC;
 
 # Структура проекта
 
+```
 internet-shop/
 │
 ├─ .gitignore                  # Файлы и папки, которые не коммитить в Git
@@ -177,6 +178,12 @@ internet-shop/
 │   ├─ generate_orders.py      # Скрипт генерации заказов
 │   ├─ requirements.txt        # Зависимости для генератора
 │   └─ Dockerfile              # Docker образ генератора
+├─ screenshots/                # Скриншоты для README
+│   ├─ redash.jpg     
+│   ├─ start1.png       
+│   ├─ start2.jpg       
+│   ├─ registration.jpg       
+│   └─ dashboard.jpg     
 ├─ notebooks/
 │   └─ analysis.ipynb           # Jupyter Notebook для анализа
 ├─ db/
@@ -184,3 +191,4 @@ internet-shop/
 ├─ docker-compose.yml           # Конфигурация всех сервисов
 ├─ .env                         # Переменные окружения
 └─ README.md                    # Подробное описание проекта
+```
