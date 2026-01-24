@@ -20,15 +20,29 @@ services:
       interval: 10s
       retries: 5
 
-  redis:
-    image: redis:7
-    restart: always
+  postgres_redash:
+    image: postgres:15-alpine
+    container_name: shop_postgres_redash
+    environment:
+      POSTGRES_USER: redash
+      POSTGRES_PASSWORD: redash123
+      POSTGRES_DB: redash
+    volumes:
+      - postgres_redash_data:/var/lib/postgresql/data
     networks:
       - analytics_net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "pg_isready -U redash -d redash"]
       interval: 5s
+      timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - analytics_net
+
   redash:
     image: redash/redash:latest
     environment:
@@ -40,11 +54,11 @@ services:
     networks:
       - analytics_net
     depends_on:
+      postgres_redash:
+        condition: service_healthy
       redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    restart: always
+        condition: service_started
+    restart: unless-stopped
     command: server
 
   redash-worker:
@@ -56,11 +70,11 @@ services:
     networks:
       - analytics_net
     depends_on:
+      postgres_redash:
+        condition: service_healthy
       redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    restart: always
+        condition: service_started
+    restart: unless-stopped
     command: worker
 
   generator:
@@ -69,11 +83,11 @@ services:
     networks:
       - analytics_net
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: always
     env_file:
-    - .env
-
+      - .env
 
   jupyter:
     image: jupyter/scipy-notebook:latest
@@ -88,11 +102,12 @@ services:
       - analytics_net
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:8888/lab || exit 1"]
       interval: 10s
       retries: 5
     env_file:
-    - .env
+      - .env
 
 volumes:
   pgdata:
+  postgres_redash_data:
